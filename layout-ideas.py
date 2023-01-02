@@ -17,11 +17,11 @@ true_string = "RJ"
 class FishingRod: # Garrett
     def __init__(self):
         self.rod_types = ("wood", "boreal", "crimsonite")
-        self.rod_type = self.rod_types[0]
+        self.rod_type = self.rod_types[1]
         if self.rod_type == "wood":
             self.string_start_loc = (513, 909)
         elif self.rod_type == "boreal":
-            self.string_start_loc = (100, 999) # fake
+            self.string_start_loc = (513, 907) # fake
         elif self.rod_type == "crimsonite":
             self.string_start_loc = (41,432) # not fake
 
@@ -49,7 +49,7 @@ class FishingLine(FishingRod):
 # returns
 #   Adds pixel coordinates of pixels in fishing line to line array in fishing line object 
     def find_string(self, start, screen):
-        threshold = 110 # Threshold for difference in rgb. Bigger than threshold means not in string
+        threshold = 65 # Threshold for difference in rgb. Bigger than threshold means not in string
         # arr = np.array([[start[0], start[1]],[start[0],start[1]]]) 
         # self._line = np.append(arr, [[start[0],start[1]],[start[0],start[1]]],axis = 0)
         # self._line = np.concatenate(([self._line],[[start[0],start[1]]]), axis = 0)
@@ -58,16 +58,19 @@ class FishingLine(FishingRod):
         #print(self._line)
         # print("Appended array along with axis = 0:\n",app_arr)
         for i in (-1, 0, 1): # Check each pixel surrounding the current pixel
-            #print(i)
-            for j in (-1, 0, 1):
-                #print(j)
-                if (i!=0 or j!=0) and not np.any(np.isin(self._line, [start[0]+i, start[1]+j])):
+            for j in (1, 0, -1):
+                print("Current Pixel: {}, {}      Comparison Pixel: {}, {}".format(start[0], start[1], start[0]+i, start[1]+j))
+                #print("jay: {}".format(j))
+                #print("eye: {}".format(i))
+                #print("comparison pixel: {}, {}".format(start[0]+i, start[1]+j))
+                print("RGB difference: {}".format(rgb_dif(screen[start[0]+i][start[1]+j], screen[start[0]][start[1]])))
+                if (i!=0 or j!=0) and not np.any(np.all([start[0]+i,start[1]+j] == self._line, axis=1)):
                     #print(rgb_dif(screen[start[0]+i][start[1]+j],screen[start[0]][start[1]]))
                     if rgb_dif(screen[start[0]+i][start[1]+j], screen[start[0]][start[1]]) < threshold: # If the current pixel is below threshold, it is part of fishing line
                         #print(len(screen[start[0]+i]))
                         #print(start)
-                        break
-                return self.find_string(np.array([start[0]+i,start[1]+j]),screen)
+                        print("adding pixel: {}, {}".format(start[0]+i, start[1]+j))
+                        return self.find_string(np.array([start[0]+i,start[1]+j]),screen)
 
     def __repr__(self):
         return self._line
@@ -104,9 +107,9 @@ def check_bob():
     return False
 
 if __name__ == "__main__": # RJ
-    img = cv2.imread("./test_img_1.jpg")
+    img = cv2.imread("./test_img_2.png")
     test_FL = FishingLine(img)
-    print(test_FL._line)
+    # print(test_FL._line)
     
     for x in test_FL._line:
         if not x[0] == 5000:
