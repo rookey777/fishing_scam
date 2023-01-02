@@ -13,5 +13,5 @@ cropped_image = img[80:280, 150:330]
 plt.imshow(cropped_image, 'gray', vmin = 0, vmax = 255)
  
 # Save the cropped image
-cv2.imwrite("Cropped Image.jpg", cropped_image)
+cv2.imwrite("Cropped_Image.jpg", cropped_image)
 plt.show()

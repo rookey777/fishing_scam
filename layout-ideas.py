@@ -2,7 +2,7 @@
 import numpy as np
 import time as time
 import pyautogui as noahpygui
-
+from matplotlib import pyplot as plt
 # rj's packages
 import cv2
 
@@ -14,13 +14,32 @@ import cv2
 latency = 0.025 # seconds to wait between checks
 true_string = "RJ"
 
+class FishingRod: # Garrett
+    def __init__(self):
+        self.rod_types = ("wood", "boreal", "crimsonite")
+        self.rod_type = self.rod_types[0]
+        if self.rod_type == "wood":
+            self.string_start_loc = (513, 909)
+        elif self.rod_type == "boreal":
+            self.string_start_loc = (100, 999) # fake
+        elif self.rod_type == "crimsonite":
+            self.string_start_loc = (41,432) # not fake
 
+def rgb_dif(pixel1, pixel2):
+    max1 = max(pixel1[0],pixel2[0])
+    max2 = max(pixel1[1],pixel2[1])
+    max3 = max(pixel1[2],pixel2[2])
+    min1 = min(pixel1[0],pixel2[0])
+    min2 = min(pixel1[1],pixel2[1])
+    min3 = min(pixel1[2],pixel2[2])
+    return (np.sqrt((max1-min1)**2+(max2-min2)**2+(max3-min3)**2))
 
-
-class FishingLine:
-    def __init__(self, x, y, screen):
-        self.start = np.array([x, y])
-        self._line = np.array([])
+class FishingLine(FishingRod):
+    def __init__(self, screen):
+        FishingRod.__init__(self)
+        x, y = self.string_start_loc[0], self.string_start_loc[1]
+        self.start = [x, y]
+        self._line = [[5000,5000]]
         self.find_string(self.start, screen)
 
 # inputs
@@ -30,17 +49,28 @@ class FishingLine:
 # returns
 #   Adds pixel coordinates of pixels in fishing line to line array in fishing line object 
     def find_string(self, start, screen):
-        threshold = 50 # Threshold for difference in rgb. Bigger than threshold means not in string
-        np.append(self._line,start)
-        for i in range(-1,1): # Check each pixel surrounding the current pixel
-            for j in range(-1,1):
-                if i!=0 or j!=0:
-                    print(np.linalg.norm(img[start[0]+i][start[1]+j]-img[start[0]][start[1]]))
-                    if np.linalg.norm(img[start[0]+i][start[1]+j]-img[start[0]][start[1]]) < threshold: # If the current pixel is below threshold, it is part of fishing line
-                        return self.find_string(np.array([[start[0]+i],[start[1]+j]]),screen)
-                    else:
-                        return
+        threshold = 110 # Threshold for difference in rgb. Bigger than threshold means not in string
+        # arr = np.array([[start[0], start[1]],[start[0],start[1]]]) 
+        # self._line = np.append(arr, [[start[0],start[1]],[start[0],start[1]]],axis = 0)
+        # self._line = np.concatenate(([self._line],[[start[0],start[1]]]), axis = 0)
+        # if len(self._line) == 0:
+        self._line = np.concatenate((self._line, [start]), axis=0)
+        #print(self._line)
+        # print("Appended array along with axis = 0:\n",app_arr)
+        for i in (-1, 0, 1): # Check each pixel surrounding the current pixel
+            #print(i)
+            for j in (-1, 0, 1):
+                #print(j)
+                if (i!=0 or j!=0) and not np.any(np.isin(self._line, [start[0]+i, start[1]+j])):
+                    #print(rgb_dif(screen[start[0]+i][start[1]+j],screen[start[0]][start[1]]))
+                    if rgb_dif(screen[start[0]+i][start[1]+j], screen[start[0]][start[1]]) < threshold: # If the current pixel is below threshold, it is part of fishing line
+                        #print(len(screen[start[0]+i]))
+                        #print(start)
+                        break
+                return self.find_string(np.array([start[0]+i,start[1]+j]),screen)
 
+    def __repr__(self):
+        return self._line
 
 
 
@@ -74,9 +104,17 @@ def check_bob():
     return False
 
 if __name__ == "__main__": # RJ
-    img = cv2.imread("./terr-fish.jpeg")
-    test_FL = FishingLine(200, 300, img)
-    print(test_FL.line)
+    img = cv2.imread("./test_img_1.jpg")
+    test_FL = FishingLine(img)
+    print(test_FL._line)
+    
+    for x in test_FL._line:
+        if not x[0] == 5000:
+            img[x[0],x[1]] = (255,0,0)
+    #np.delete(img, 0)
+    # img2 = cv2.imwrite(img)
+    plt.imshow(img, vmin = 0, vmax = 255)
+    plt.show()
     # grab_bob_pos()
     # while(true_string.equals("RJ")):
     #     noah_mouse_start = noahpygui.position()
